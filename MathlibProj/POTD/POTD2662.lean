@@ -1,83 +1,30 @@
 import Mathlib.Algebra.Field.ZMod
 import Mathlib.FieldTheory.Finite.Basic
 import Mathlib.Order.Partition.Finpartition
-import Mathlib.Algebra.EuclideanDomain.Defs
-import Mathlib.Data.Int.Interval
-import Mathlib.Algebra.Group.End
 
-lemma orb_ord (p r : ℕ) [Fact p.Prime] (U : Equiv.Perm (ZMod p)) (a : ZMod p) :
+theorem orb_ord {α : Type} [Fintype α] [DecidableEq α] (U : Equiv.Perm α) (a : α) (r : ℕ) :
     (U^r) a = a ↔ Finset.card {b | U.SameCycle a b} ∣ r := by
-  let orb : Finset (ZMod p) := {b | U.SameCycle a b}
-  let o := orb.card
-  have loop' (x y : ℤ) (hlt : x < y) (heq : (U^x) a = (U^y) a) : o ≤ y-x := by
-    have loopy : (U^(y-x)) a = a := by
-      exact calc (U^(y-x)) a
-        _ = (U^(y + (-x))) a := rfl
-        _ = (U ^ (-x)) ((U ^ y) a) := by rw[add_comm, zpow_add, Equiv.Perm.mul_apply]
-        _ = (U ^ (-x)) ((U ^ x) a) := by rw[heq]
-        _ = (U^(x +(-x))) a := by rw[←Equiv.Perm.mul_apply, ←zpow_add, add_comm]
-        _ = a := by rw[Int.add_right_neg]; simp only [zpow_zero, Equiv.Perm.coe_one, id_eq]
-    let map' : ℤ → ZMod p := fun n ↦ (U^n) a
-    have : Set.SurjOn map' (Finset.Ico 0 (y-x)) orb := by
-      intro j jh; unfold orb at jh
-      simp only [Finset.coe_filter, Finset.mem_univ, true_and, Set.mem_setOf_eq] at jh
-      obtain ⟨i, ih⟩ := jh
-      rw[←EuclideanDomain.div_add_mod i (y-x)] at ih
-      exists (i%(y-x)); constructor
-      · simp only [Finset.coe_Ico, Set.mem_Ico]
-        constructor
-        · refine Int.emod_nonneg i ?_
-          apply sub_ne_zero_of_ne; exact Ne.symm (Int.ne_of_lt hlt)
-        · exact Int.emod_lt_of_pos i (Int.sub_pos_of_lt hlt)
-      · unfold map'; rw[←ih]
-        rw[add_comm, zpow_add]; simp only [Equiv.Perm.coe_mul, Function.comp_apply]
-        rw[zpow_mul]
-        rw[Equiv.Perm.zpow_apply_eq_self_of_apply_eq_self loopy (i / (y-x))]
-    replace := Finset.card_le_card_of_surjOn map' this
-    rw[Int.card_Ico 0 (y-x)] at this; grind only [= Finset.mem_Icc]
-  have loop (x y : ℕ) (hlt : x < y) (heq : (U^x) a = (U^y) a) : o ≤ y-x := by
-    have : (U^(x:ℤ)) a = (U^(y:ℤ)) a := by
-      exact ZMod.valMinAbs_inj.mp (congrArg ZMod.valMinAbs heq)
-    have := loop' (x:ℤ) (y:ℤ) (Int.ofNat_lt.mpr hlt) this
-    rw[←Int.ofNat_sub (Nat.le_of_succ_le hlt)] at this; exact Int.ofNat_le.mp this
-  let map : ℕ → ZMod p := fun n ↦ (U^n) a
-  have reduce : (U^o) a = a := by
-    have hc : o < (Finset.Icc 0 o).card := by
-      simp only [Nat.card_Icc, tsub_zero, lt_add_iff_pos_right, zero_lt_one]
-    have hf : Set.MapsTo map (Finset.Icc 0 o) orb := by
-      intro x xh; unfold orb
-      simp only [Finset.coe_filter, Finset.mem_univ, true_and, Set.mem_setOf_eq]
-      unfold map; exists x
-    obtain ⟨x, xh, y, yh, hineq, hm⟩ := Finset.exists_ne_map_eq_of_card_lt_of_maps_to hc hf
-    unfold map at hm
-    replace hm : (U^(min x y)) a = (U^(max x y)) a := by grind only [= max_def, = min_def]
-    have : min x y < max x y := by grind only [= min_def, = max_def]
-    replace := loop (min x y) (max x y) this hm
-    have : min x y = 0 ∧ max x y = o := by
-      grind only [= Finset.mem_Icc, = max_def, = min_def]
-    rw[this.1, this.2] at hm
-    simp only [pow_zero, Equiv.Perm.coe_one, id_eq] at hm
-    symm; exact hm
-  constructor
-  · intro hfix
-    have euc := Nat.div_add_mod r o
-    rw[←euc, add_comm, pow_add, pow_mul, Equiv.Perm.mul_apply] at hfix
-    rw[Equiv.Perm.pow_apply_eq_self_of_apply_eq_self reduce] at hfix
-    by_cases roz : 0 < r % o
-    · specialize loop 0 (r % o) roz
-      simp only [pow_zero, Equiv.Perm.coe_one, id_eq, tsub_zero, hfix, forall_const] at loop
-      have : o ≠ 0 := by
-        refine Finset.card_ne_zero.mpr ?_
-        exists a; unfold orb; simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-        exact Equiv.Perm.SameCycle.refl U a
-      replace : r%o < o := Nat.mod_lt r (Nat.zero_lt_of_ne_zero this)
-      replace := Nat.lt_of_le_of_lt loop this
-      replace := (Nat.not_lt_zero 0) (Nat.lt_add_right_iff_pos.mp this)
-      contradiction
-    · simp only [not_lt, nonpos_iff_eq_zero] at roz
-      rw[roz] at euc; rw[←euc]; exists (r/o)
-  · intro hdiv; obtain ⟨k, kh⟩ := hdiv; change r = o * k at kh; subst kh
-    rw[pow_mul, Equiv.Perm.pow_apply_eq_self_of_apply_eq_self reduce]
+  by_cases! hu : U a = a
+  · rw[Equiv.Perm.pow_apply_eq_self_of_apply_eq_self hu]
+    simp only [true_iff]; convert one_dvd r
+    refine (Fintype.existsUnique_iff_card_one (U.SameCycle a)).mp ?_
+    exists a; simp only
+    refine ⟨Equiv.Perm.SameCycle.refl U a, ?_⟩
+    intro y hy; obtain ⟨n, hn⟩ := hy
+    rw[Equiv.Perm.zpow_apply_eq_self_of_apply_eq_self hu] at hn
+    exact Eq.symm hn
+  rw[←Equiv.Perm.cycleOf_pow_apply_self, ←zpow_natCast]
+  rw[Equiv.Perm.cycle_zpow_mem_support_iff]
+  · simp only [EuclideanDomain.mod_eq_zero]
+    suffices (U.cycleOf a).support.card = Finset.card {b | U.SameCycle a b} by
+      rw[this]; exact Int.ofNat_dvd
+    apply congrArg
+    ext y; simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+    convert Equiv.Perm.mem_support_cycleOf_iff
+    suffices a ∈ U.support from ⟨fun h ↦ ⟨h, this⟩, fun h ↦ h.1⟩
+    exact Equiv.Perm.mem_support.mpr hu
+  · exact (Equiv.Perm.isCycle_cycleOf_iff U).mpr hu
+  · rw[Equiv.Perm.cycleOf_apply_self]; exact hu
 
 theorem POTD_2662 (p : ℕ) [Fact p.Prime] (hodd : Odd p) (U : Equiv.Perm (ZMod p)) (B : ZMod p)
     (ha : ∀ a : ZMod p, B * U (U a) = a) : B ^ ((p - 1) / 2) = 1 := by
@@ -94,17 +41,17 @@ theorem POTD_2662 (p : ℕ) [Fact p.Prime] (hodd : Odd p) (U : Equiv.Perm (ZMod 
     · apply orderOf_dvd_of_pow_eq_one
       exact ZMod.pow_card_sub_one_eq_one bnz
   apply Nat.not_odd_iff_even.mp at ord_even
-  have claim1 : U 0 = 0 := by
+  have claim1 (n : ℤ) : (U^n) 0 = 0 := by
     have := calc B * U 0
       _ = B * U (U (U 0)) := by
         apply (mul_right_inj' bnz).mpr
         apply Equiv.Perm.congr_arg
         symm; exact (mul_eq_zero_iff_left bnz).mp (ha 0)
       _ = U 0 := ha (U 0)
+    apply Equiv.Perm.zpow_apply_eq_self_of_apply_eq_self
     by_contra c
     replace := (mul_eq_right₀ c).mp this; subst this
     simp only [orderOf_one, Nat.not_even_one] at ord_even
-  have claim1' (n : ℤ) := Equiv.Perm.zpow_apply_eq_self_of_apply_eq_self claim1 n
   open Classical in
   let cycles := Finpartition.ofSetoid (Equiv.Perm.SameCycle.setoid U)
   have claim2 : ∀ c ∈ cycles.parts.filter (fun x ↦ 0 ∉ x), 2 * (orderOf B) ∣ c.card := by
@@ -115,7 +62,7 @@ theorem POTD_2662 (p : ℕ) [Fact p.Prime] (hodd : Odd p) (U : Equiv.Perm (ZMod 
     obtain ⟨w, wh⟩ := cha
     unfold Equiv.Perm.SameCycle.setoid Equiv.Perm.SameCycle at wh; simp only at wh
     have word : (U ^ cyc.card) w = w := by
-      apply (orb_ord p cyc.card U w).mpr
+      apply (orb_ord U w cyc.card).mpr
       exists 1; simp only [mul_one]
       apply congrArg; rw[←wh]; unfold Equiv.Perm.SameCycle
       ext x; simp only [Finset.mem_filter, Finset.mem_univ, true_and]
@@ -170,7 +117,7 @@ theorem POTD_2662 (p : ℕ) [Fact p.Prime] (hodd : Odd p) (U : Equiv.Perm (ZMod 
         simp only [Finset.mem_filter, Finset.mem_univ, true_and] at ha
         apply Setoid.symm' at hA2
         obtain ⟨n, nh⟩ := Setoid.trans' (Equiv.Perm.SameCycle.setoid U) hA2 ha
-        rw[claim1' n] at nh; rw[nh]
+        rw[claim1 n] at nh; rw[nh]
       · intro az; subst az; exact hA2
     · intro hA; constructor
       · unfold cycles Finpartition.ofSetoid Finpartition.ofSetSetoid
@@ -178,7 +125,7 @@ theorem POTD_2662 (p : ℕ) [Fact p.Prime] (hodd : Odd p) (U : Equiv.Perm (ZMod 
         exists 0; subst hA; ext a; constructor
         · intro ah
           simp only [Finset.mem_filter, Finset.mem_univ, true_and] at ah
-          obtain ⟨n, nh⟩ := ah; rw[claim1' n] at nh; subst nh; simp only [Finset.mem_singleton]
+          obtain ⟨n, nh⟩ := ah; rw[claim1 n] at nh; subst nh; simp only [Finset.mem_singleton]
         · intro ah; simp only [Finset.mem_singleton] at ah; subst ah
           simp only [Finset.mem_filter, Finset.mem_univ, true_and]
           exists 0
