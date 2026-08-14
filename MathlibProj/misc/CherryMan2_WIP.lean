@@ -23,6 +23,7 @@ lemma reachable_imp_reachable' {n : ℕ} {a b : ZMod n → ZMod 2} (h : Reachabl
 
 lemma factorize (n p : ℕ) (hp : p.Prime) : ∃ r k, n = p^r * k ∧ p.Coprime k := by sorry
 
+open Finset in
 theorem thm (n : ℕ) (hn : n > 0) :
     Reachable (fun x : ZMod n ↦ if x == 0 then 1 else 0) (fun x ↦ 1) ↔ n = 1 := by
   by_cases hno : n = 1
@@ -37,6 +38,15 @@ theorem thm (n : ℕ) (hn : n > 0) :
   obtain ⟨r, k, hrk⟩ := factorize n p hp.1
   by_cases hko : k = 1
   · subst hko; simp only [mul_one, Nat.coprime_one_right_eq_true, and_true] at hrk
+    have := NeZero.of_pos hn
+    suffices suff : ∀ f : ZMod n → ZMod 2, Reachable' f (fun x ↦ 1) →
+        p ∣ #(Finset.univ.filter (fun x => f x = 1)) by
+      specialize suff (fun x ↦ if x = 0 then 1 else 0) c
+      simp only [ite_eq_left_iff, zero_ne_one, imp_false, Decidable.not_not] at suff
+      have : ({x | x = 0} : Finset (ZMod n)) = {0} := by
+        grind only [= mem_filter, = mem_singleton, ← mem_univ]
+      simp only [this, card_singleton, Nat.dvd_one] at suff
+      have := suff ▸ hp.1; contradiction
     sorry
   suffices suff : Reachable' (fun x : ZMod k ↦ if x == 0 then 1 else 0) (fun x ↦ 1) by
     have : k < n := by
