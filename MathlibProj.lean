@@ -1,18 +1,39 @@
-module  -- shake: keep-all
+module  -- shake: keep-all --deprecated_module: ignore
 
 public import MathlibProj.Basic
 public import MathlibProj.IMO_2002_4
-public import MathlibProj.POTD2395
-public import MathlibProj.POTD2409
-public import MathlibProj.POTD2411
-public import MathlibProj.POTD2414
-public import MathlibProj.POTD2490
-public import MathlibProj.POTD2494
+public import MathlibProj.MONT.MONT_2_14_16
+public import MathlibProj.MONT.MONT_2_14_17
+public import MathlibProj.POTD.POTD1648
+public import MathlibProj.POTD.POTD2395
+public import MathlibProj.POTD.POTD2409
+public import MathlibProj.POTD.POTD2411
+public import MathlibProj.POTD.POTD2414
+public import MathlibProj.POTD.POTD2490
+public import MathlibProj.POTD.POTD2494
+public import MathlibProj.POTD.POTD2506
+public import MathlibProj.POTD.POTD2507
+public import MathlibProj.POTD.POTD2510
+public import MathlibProj.POTD.POTD2522
+public import MathlibProj.POTD.POTD2523_INCOMPLETE
+public import MathlibProj.POTD.POTD2527
+public import MathlibProj.POTD.POTD2662
+public import MathlibProj.POTD.POTD2678
+public import MathlibProj.POTD.POTD2697
+public import MathlibProj.POTD.POTD2698
 public import MathlibProj.USAMO_2007_1
+public import MathlibProj.dailylogic_jul_16_2026
 public import MathlibProj.exercises3
 public import MathlibProj.exercises4
+public import MathlibProj.misc.CherryMan
+public import MathlibProj.misc.CherryMan2_WIP
 public import MathlibProj.misc.NT
+public import MathlibProj.misc.askmath
+public import MathlibProj.misc.equiv_inv
+public import MathlibProj.misc.fano
+public import MathlibProj.misc.fano2
 public import MathlibProj.misc.func_eq
 public import MathlibProj.misc.highly_composite
 public import MathlibProj.misc.orbits
+public import MathlibProj.misc.otters
 public import MathlibProj.scrap
